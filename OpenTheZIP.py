@@ -323,8 +323,8 @@ class AboutDialog(QDialog):
             "Поддерживает автономное шифрование на основе AES-256-GCM.\n"
             "Гарантирует целостность архива с помощью SHA-256.\n\n"
             "Разработка: элитный программист-полиглот.\n"
-            "Официальный сайт: https://openthezip.example.com (заглушка)\n"
-            "Связь: support@openthezip.example.com"
+            "Официальный сайт: https://openthezip.tilda.ws/\n"
+            "Связь: hereiop@vk.com"
         )
         tabs.addTab(info_text, "Общие сведения")
 
@@ -384,7 +384,7 @@ class AboutDialog(QDialog):
         repo_text.setReadOnly(True)
         repo_text.setPlainText(
             "Официальный репозиторий на GitHub:\n"
-            "https://github.com/openthezip/openthezip (замените на реальный)\n\n"
+            "https://github.com/team-s1s-toptools/OpenTheZIP\n\n"
             "Принимаются пулл-реквесты и сообщения об ошибках.\n"
             "Код распространяется под лицензией MIT."
         )
