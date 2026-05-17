@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-"""
-OpenTheZIP — архиватор с настраиваемым сверхсжатием, автономным шифрованием,
-файловый проводник с защитой папок паролем. Расширенный выбор расширений.
-"""
 
 import sys
 import os
@@ -31,11 +27,6 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.backends import default_backend
 
-
-
-# ----------------------------------------------------------------------
-# Константы архива
-# ----------------------------------------------------------------------
 MAGIC = b'OTZP'
 VERSION = 1
 COMPRESSION_LZMA2 = 0
@@ -51,9 +42,6 @@ PBKDF2_ITERATIONS = 100_000
 LOCK_FILE = '.otz_lock'
 
 
-# ----------------------------------------------------------------------
-# Ядро сжатия/шифрования
-# ----------------------------------------------------------------------
 class OtZipCore:
     @staticmethod
     def compress_file(
@@ -174,9 +162,6 @@ class OtZipCore:
         return kdf.derive(password.encode('utf-8'))
 
 
-# ----------------------------------------------------------------------
-# Защита папок
-# ----------------------------------------------------------------------
 class PasswordProtector:
     @staticmethod
     def is_protected(dir_path: str) -> bool:
@@ -236,9 +221,6 @@ class PasswordProtector:
             return False
 
 
-# ----------------------------------------------------------------------
-# Проводник с защитой
-# ----------------------------------------------------------------------
 class ProtectedTreeView(QTreeView):
     def __init__(self, unlocked_dirs: Set[str], parent=None):
         super().__init__(parent)
@@ -282,9 +264,6 @@ class ProtectedTreeView(QTreeView):
             return False
 
 
-# ----------------------------------------------------------------------
-# Диалог настроек сжатия
-# ----------------------------------------------------------------------
 class CompressionSettingsDialog(QDialog):
     def __init__(self, current_level=9, current_extreme=True, parent=None):
         super().__init__(parent)
@@ -324,9 +303,6 @@ class CompressionSettingsDialog(QDialog):
         return self.level_combo.currentData(), self.extreme_check.isChecked()
 
 
-# ----------------------------------------------------------------------
-# Диалог «О программе»
-# ----------------------------------------------------------------------
 class AboutDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -421,9 +397,6 @@ class AboutDialog(QDialog):
         layout.addWidget(btn_box)
 
 
-# ----------------------------------------------------------------------
-# Главное окно
-# ----------------------------------------------------------------------
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -436,23 +409,18 @@ class MainWindow(QMainWindow):
         self.setPalette(pal)
         self.setStyleSheet('QWidget { background-color: white; }')
 
-        # Настройки сжатия по умолчанию
         self.compression_level = 9
         self.compression_extreme = True
 
-        # Воркер сжатия (чтобы не удалялся раньше времени)
         self.worker = None
 
-        # Кэш разблокированных папок
         self._unlocked_dirs: Set[str] = set()
 
-        # Файловая модель
         self.model = QFileSystemModel()
         self.model.setRootPath(QDir.homePath())
         self.model.setFilter(QDir.AllEntries | QDir.NoDotAndDotDot)
         self.model.setReadOnly(True)
 
-        # Проводник
         self.tree = ProtectedTreeView(self._unlocked_dirs)
         self.tree.setModel(self.model)
         self.tree.setRootIndex(self.model.index(QDir.homePath()))
@@ -466,7 +434,6 @@ class MainWindow(QMainWindow):
         self.tree.customContextMenuRequested.connect(self.on_context_menu)
         self.tree.setSelectionMode(QAbstractItemView.ExtendedSelection)
 
-        # Адресная строка
         address_layout = QHBoxLayout()
         self.address_edit = QLineEdit()
         self.address_edit.setPlaceholderText('Введите путь и нажмите Enter...')
@@ -477,7 +444,6 @@ class MainWindow(QMainWindow):
         address_layout.addWidget(self.address_edit)
         address_layout.addWidget(self.go_btn)
 
-        # Тулбар
         toolbar = QToolBar('Основные действия')
         toolbar.setMovable(False)
         self.addToolBar(toolbar)
@@ -520,7 +486,6 @@ class MainWindow(QMainWindow):
         self.act_refresh.triggered.connect(self.refresh_view)
         toolbar.addAction(self.act_refresh)
 
-        # Пароль архива
         pw_layout = QHBoxLayout()
         pw_label = QLabel('Пароль архива:')
         self.password_edit = QLineEdit()
@@ -549,13 +514,9 @@ class MainWindow(QMainWindow):
         self.update_address_bar()
         self.tree.selectionModel().currentChanged.connect(self.on_tree_current_changed)
 
-    # ------------------------------------------------------------------
-    # Меню
-    # ------------------------------------------------------------------
     def _create_menus(self):
         menubar = self.menuBar()
 
-        # Файл
         file_menu = menubar.addMenu('Файл')
         import_action = QAction('Импорт файлов...', self)
         import_action.triggered.connect(self.on_import_files)
@@ -571,7 +532,6 @@ class MainWindow(QMainWindow):
         exit_action.triggered.connect(self.close)
         file_menu.addAction(exit_action)
 
-        # Действие
         action_menu = menubar.addMenu('Действие')
         compress_action = QAction('Сжать выбранное...', self)
         compress_action.triggered.connect(self.on_compress_from_selection)
@@ -581,13 +541,11 @@ class MainWindow(QMainWindow):
         decompress_action.triggered.connect(self.on_decompress_file)
         action_menu.addAction(decompress_action)
 
-        # Настройки
         settings_menu = menubar.addMenu('Настройки')
         compression_settings_action = QAction('Сжатие...', self)
         compression_settings_action.triggered.connect(self.open_compression_settings)
         settings_menu.addAction(compression_settings_action)
 
-        # Вид
         view_menu = menubar.addMenu('Вид')
         refresh_action = QAction('Обновить', self)
         refresh_action.triggered.connect(self.refresh_view)
@@ -605,7 +563,6 @@ class MainWindow(QMainWindow):
         search_action.triggered.connect(self.on_search_files)
         view_menu.addAction(search_action)
 
-        # О программе
         about_menu = menubar.addMenu('О программе')
         about_action = QAction('О программе', self)
         about_action.triggered.connect(self.show_about)
@@ -624,15 +581,10 @@ class MainWindow(QMainWindow):
                 f'Экстремальный: {"да" if self.compression_extreme else "нет"}'
             )
 
-    # ------------------------------------------------------------------
-    # Управление потоком
-    # ------------------------------------------------------------------
     def closeEvent(self, event: QCloseEvent):
-        # Если поток ещё выполняется, ждём до 3 секунд
         if self.worker and self.worker.isRunning():
             self.worker.wait(3000)
             if self.worker.isRunning():
-                # Принудительно завершаем (только при закрытии)
                 self.worker.terminate()
                 self.worker.wait()
         event.accept()
@@ -652,9 +604,6 @@ class MainWindow(QMainWindow):
         self.worker.start()
         return True
 
-    # ------------------------------------------------------------------
-    # Навигация
-    # ------------------------------------------------------------------
     def current_path(self) -> str:
         idx = self.tree.currentIndex()
         if idx.isValid():
@@ -717,9 +666,6 @@ class MainWindow(QMainWindow):
         if parent and parent != current:
             self.navigate_to_dir(parent)
 
-    # ------------------------------------------------------------------
-    # Операции с файлами
-    # ------------------------------------------------------------------
     def _check_protected_operation(self, path: str, operation_name: str) -> bool:
         if not os.path.isdir(path):
             return True
@@ -827,9 +773,6 @@ class MainWindow(QMainWindow):
         except Exception as e:
             QMessageBox.critical(self, 'Ошибка', f'Не удалось переименовать:\n{e}')
 
-    # ------------------------------------------------------------------
-    # Импорт / Экспорт / Поиск
-    # ------------------------------------------------------------------
     def on_import_files(self):
         root_path = self.current_path()
         if not os.path.isdir(root_path):
@@ -969,9 +912,6 @@ class MainWindow(QMainWindow):
         else:
             QMessageBox.information(self, 'Результат', 'Ничего не найдено.')
 
-    # ------------------------------------------------------------------
-    # Контекстное меню
-    # ------------------------------------------------------------------
     def on_context_menu(self, pos: QPoint):
         index = self.tree.indexAt(pos)
         if not index.isValid():
@@ -992,9 +932,6 @@ class MainWindow(QMainWindow):
         act_compress.triggered.connect(lambda: self.compress_selected([path]))
         menu.exec_(self.tree.viewport().mapToGlobal(pos))
 
-    # ------------------------------------------------------------------
-    # Защита папок
-    # ------------------------------------------------------------------
     def set_protection(self, dir_path: str):
         password, ok = QInputDialog.getText(
             self, 'Установка пароля',
@@ -1030,9 +967,6 @@ class MainWindow(QMainWindow):
             self._unlocked_dirs.discard(dir_path)
             self.status.showMessage(f'Защита папки "{os.path.basename(dir_path)}" снята.')
 
-    # ------------------------------------------------------------------
-    # Сжатие / распаковка
-    # ------------------------------------------------------------------
     def compress_selected(self, paths):
         if not paths:
             QMessageBox.warning(self, 'Предупреждение', 'Не выбран ни один файл.')
@@ -1103,12 +1037,9 @@ class MainWindow(QMainWindow):
         self.status.showMessage(message)
         if not success:
             QMessageBox.critical(self, 'Ошибка', message)
-        self.worker = None  # Сбрасываем ссылку, чтобы можно было запустить снова
+        self.worker = None
         self.refresh_view()
 
-    # ------------------------------------------------------------------
-    # Вид
-    # ------------------------------------------------------------------
     def refresh_view(self):
         current = self.current_path()
         self.model.setRootPath(current)
@@ -1128,9 +1059,6 @@ class MainWindow(QMainWindow):
         dlg.exec_()
 
 
-# ----------------------------------------------------------------------
-# Рабочий поток сжатия/распаковки
-# ----------------------------------------------------------------------
 class CompressionWorker(QThread):
     finished = pyqtSignal(bool, str)
 
@@ -1158,7 +1086,6 @@ class CompressionWorker(QThread):
             self.finished.emit(False, str(e))
 
 
-# ----------------------------------------------------------------------
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     app.setStyle('Fusion')
